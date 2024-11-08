@@ -1,0 +1,119 @@
+# version: '3.8'
+
+# services:
+#   ollama:
+#     image: ollama/ollama:latest
+#     container_name: ollama-gpu
+#     ports:
+#       - "11434:11434"
+#     volumes:
+#       - ollama_data:/root/.ollama
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               count: 1
+#               capabilities: [gpu]
+#     networks:
+#       - ollama-net
+
+#   openwebui:
+#     image: ghcr.io/open-webui/open-webui:main
+#     container_name: openwebui
+#     ports:
+#       - "3000:8080"
+#     environment:
+#       - OLLAMA_API_BASE_URL=http://ollama:11434/api
+#       - WEBUI_SECRET_KEY=your-secret-key-here
+#     depends_on:
+#       - ollama
+#     networks:
+#       - ollama-net
+#     volumes:
+#       - openwebui_data:/app/backend/data
+
+# networks:
+#   ollama-net:
+#     driver: bridge
+
+# volumes:
+#   ollama_data:
+#     external: true
+#   openwebui_data:
+#     external: true
+
+
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama-gpu
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - ollama-net
+
+  openwebui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: openwebui
+    ports:
+      - "3000:8080"
+    environment:
+      - OLLAMA_API_BASE_URL=http://ollama:11434/api
+      - WEBUI_SECRET_KEY=your-secret-key-here
+    depends_on:
+      - ollama
+    networks:
+      - ollama-net
+    volumes:
+      - openwebui_data:/app/backend/data
+
+  # agent:
+  #   build: 
+  #     context: ./agent
+  #     dockerfile: Dockerfile
+  #   container_name: ollama-agent
+  #   depends_on:
+  #     - ollama
+  #   networks:
+  #     - ollama-net
+  #   environment:
+  #     - OLLAMA_API_BASE_URL=http://ollama:11434
+  #   restart: unless-stopped
+  agent:
+    build: 
+      context: ./agent
+      dockerfile: Dockerfile
+    container_name: ollama-agent
+    depends_on:
+      - ollama
+    networks:
+      - ollama-net
+    volumes:
+      - ./agent/data:/app/data
+    environment:
+      - OLLAMA_API_BASE_URL=http://ollama:11434
+    stdin_open: true  # Keep STDIN open
+    tty: true        # Allocate a pseudo-TTY
+    restart: unless-stopped
+
+networks:
+  ollama-net:
+    driver: bridge
+
+volumes:
+  ollama_data:
+    external: true
+  openwebui_data:
+    external: true
